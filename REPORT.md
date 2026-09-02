@@ -1,8 +1,8 @@
 # รายงานสรุปผลการปฏิบัติการ: Data Integration Pipeline
 ## TechTrove E-Commerce: จากข้อมูลดิบหลายระบบสู่ข้อมูลพร้อมวิเคราะห์
-**รายวิชา:** Data Warehousing / Data Engineering  
-**รหัสนิสิต:** 67160230  
-**บทบาท:** Data Engineer  
+**รายวิชา:** Data Warehousing / Data Engineering 
+**รหัสนิสิต:** 67160230 
+**บทบาท:** Data Engineer 
 
 ---
 
@@ -36,36 +36,36 @@ TechTrove E-Commerce ประสบปัญหาข้อมูลกระ�
 ## 3. ขั้นตอนการทำงานของ Data Integration Pipeline
 
 ```
-[ orders_2026_01.csv ]      [ orders_2026_02.csv ]
-           │                           │ (Schema Alignment: rename, parse %, dayfirst dates)
-           └───────────┬───────────────┘
-                       ▼
-             [ pd.concat (752 rows) ]
-                       │
-                       ▼
-          [ Deduplication (750 rows) ] ── (Dropped 2 duplicate order_ids)
-                       │
-                       ▼
-         [ Business Rules (746 rows) ] ── (Dropped quantity <= 0 and null unit_price)
-                       │
-                       ├──────────────────────────── [ dim_customer (160 rows) ]
-                       ▼                             (Clean email, map 6 standard provinces)
-         [ Customer Match (724 rows) ] ── (Dropped 22 rows with missing customer_ids)
-                       │
-                       ├──────────────────────────── [ dim_product (40 rows) ]
-                       ▼
-          [ Product Match (722 rows) ] ── (Dropped 2 rows with invalid product_id 'P999')
-                       │
-                       ├──────────────────────────── [ payments_clean (751 rows) ]
-                       ▼                             (Flatten nested JSON, deduplicate)
-          [ Payment Filter (660 rows) ] ── (Filtered out 44 FAILED and 18 REFUNDED)
-                       │
-                       ▼
-             [ fact_sales.csv ] ── (Calculated Net Sales = qty * price * (1 - discount))
-                       │
-         ┌─────────────┴─────────────┐
-         ▼                           ▼
-[ summary_by_province.csv ]  [ summary_by_category.csv ]
+[ orders_2026_01.csv ] [ orders_2026_02.csv ]
+ │ │ (Schema Alignment: rename, parse %, dayfirst dates)
+ └───────────┬───────────────┘
+ ▼
+ [ pd.concat (752 rows) ]
+ │
+ ▼
+ [ Deduplication (750 rows) ] ── (Dropped 2 duplicate order_ids)
+ │
+ ▼
+ [ Business Rules (746 rows) ] ── (Dropped quantity <= 0 and null unit_price)
+ │
+ ├──────────────────────────── [ dim_customer (160 rows) ]
+ ▼ (Clean email, map 6 standard provinces)
+ [ Customer Match (724 rows) ] ── (Dropped 22 rows with missing customer_ids)
+ │
+ ├──────────────────────────── [ dim_product (40 rows) ]
+ ▼
+ [ Product Match (722 rows) ] ── (Dropped 2 rows with invalid product_id 'P999')
+ │
+ ├──────────────────────────── [ payments_clean (751 rows) ]
+ ▼ (Flatten nested JSON, deduplicate)
+ [ Payment Filter (660 rows) ] ── (Filtered out 44 FAILED and 18 REFUNDED)
+ │
+ ▼
+ [ fact_sales.csv ] ── (Calculated Net Sales = qty * price * (1 - discount))
+ │
+ ┌─────────────┴─────────────┐
+ ▼ ▼
+[ summary_by_province.csv ] [ summary_by_category.csv ]
 ```
 
 ---
@@ -105,29 +105,29 @@ TechTrove E-Commerce ประสบปัญหาข้อมูลกระ�
 
 ## 5. คำตอบคำถามวิเคราะห์เชิงธุรกิจ 6 ข้อ (Business Analysis Answers)
 
-### 🔹 ข้อ 1: หลังรวมไฟล์ orders มีจำนวนแถวเท่าใด และเหลือกี่แถวหลังลบ duplicate?
+### ข้อ 1: หลังรวมไฟล์ orders มีจำนวนแถวเท่าใด และเหลือกี่แถวหลังลบ duplicate?
 - **รวมไฟล์ Orders ทั้ง 2 เดือน:** มีจำนวนแถวรวมทั้งสิ้น **752 แถว** (มกราคม 361 แถว + กุมภาพันธ์ 391 แถว)
 - **จำนวนแถวหลังลบ Duplicate:** เหลือข้อมูล **750 แถว**
 - **รายละเอียด:** ตรวจพบ `order_id` ซ้ำกัน 2 รายการ ได้แก่ `ORD000056` (ในไฟล์เดือน ม.ค.) และ `ORD000416` (ในไฟล์เดือน ก.พ.) โดย Pipeline ทำการเก็บแถวล่าสุดตามลำดับที่ปรากฏ (`keep='last'`) ตามกติกาทางธุรกิจ
 
 ---
 
-### 🔹 ข้อ 2: มีแถวที่ customer_id หรือ product_id ไม่พบใน Master Data อย่างละกี่แถว?
+### ข้อ 2: มีแถวที่ customer_id หรือ product_id ไม่พบใน Master Data อย่างละกี่แถว?
 - **Customer ID ไม่พบใน Master Data:** มีจำนวน **22 แถวคำสั่งซื้อ**
-  - เกิดจากรหัสลูกค้า 5 รายที่ไม่มีใน CRM ได้แก่ `C0161`, `C0162`, `C0163`, `C0164`, `C0165`
+ - เกิดจากรหัสลูกค้า 5 รายที่ไม่มีใน CRM ได้แก่ `C0161`, `C0162`, `C0163`, `C0164`, `C0165`
 - **Product ID ไม่พบใน Master Data:** มีจำนวน **2 แถวคำสั่งซื้อ**
-  - เกิดจากรหัสสินค้าที่ไม่มีใน Procurement Master คือ `P999`
+ - เกิดจากรหัสสินค้าที่ไม่มีใน Procurement Master คือ `P999`
 
 ---
 
-### 🔹 ข้อ 3: มียอดขายที่ใช้ได้จริงกี่ธุรกรรม และยอดขายสุทธิรวมเท่าใด?
+### ข้อ 3: มียอดขายที่ใช้ได้จริงกี่ธุรกรรม และยอดขายสุทธิรวมเท่าใด?
 - **จำนวนธุรกรรมยอดขายที่ใช้ได้จริง (PAID Transactions):** **660 ธุรกรรม**
-  - จาก 722 คำสั่งซื้อที่เชื่อมโยง Master ครบถ้วน พบสถานะ `PAID` 660 รายการ, `FAILED` 44 รายการ และ `REFUNDED` 18 รายการ
+ - จาก 722 คำสั่งซื้อที่เชื่อมโยง Master ครบถ้วน พบสถานะ `PAID` 660 รายการ, `FAILED` 44 รายการ และ `REFUNDED` 18 รายการ
 - **ยอดขายสุทธิรวมทั้งสิ้น (Total Net Sales):** **10,224,044.09 บาท**
 
 ---
 
-### 🔹 ข้อ 4: จังหวัดใดมียอดขายสุทธิสูงสุด?
+### ข้อ 4: จังหวัดใดมียอดขายสุทธิสูงสุด?
 - **อันดับ 1: กรุงเทพมหานคร** มียอดขายสุทธิ **2,612,955.88 บาท** (25.56% ของยอดขายรวม, จำนวน 154 ออเดอร์, รวม 323 ชิ้น)
 
 **ตารางสรุปยอดขายแยกตาม 6 จังหวัด (`summary_by_province.csv`):**
@@ -144,7 +144,7 @@ TechTrove E-Commerce ประสบปัญหาข้อมูลกระ�
 
 ---
 
-### 🔹 ข้อ 5: หมวดสินค้าใดมียอดขายสุทธิสูงสุด?
+### ข้อ 5: หมวดสินค้าใดมียอดขายสุทธิสูงสุด?
 - **อันดับ 1: Smartphone** มียอดขายสุทธิ **3,092,117.34 บาท** (30.24% ของยอดขายรวม, จำนวน 178 ออเดอร์, รวม 384 ชิ้น)
 
 **ตารางสรุปยอดขายแยกตาม 4 หมวดสินค้า (`summary_by_category.csv`):**
@@ -159,16 +159,16 @@ TechTrove E-Commerce ประสบปัญหาข้อมูลกระ�
 
 ---
 
-### 🔹 ข้อ 6: หากสลับลำดับ merge ก่อน cleaning ผลลัพธ์หรือความเชื่อมั่นของข้อมูลเปลี่ยนอย่างไร?
+### ข้อ 6: หากสลับลำดับ merge ก่อน cleaning ผลลัพธ์หรือความเชื่อมั่นของข้อมูลเปลี่ยนอย่างไร?
 การ Clean ข้อมูลก่อน Merge ถือเป็นหัวใจสำคัญของกระบวนการ Data Integration หากสลับลำดับโดย Merge ก่อน Cleaning จะส่งผลกระทบอย่างร้ายแรง 4 ประการ:
-1. **เกิดปัญหา Cartesian Explosion (Fan-out Duplication):**  
-   หากใน Master Data มีคีย์ซ้ำ (เช่น `C0012`, `C0045`, `C0088` ใน CRM) การ Merge จะจับคู่แถวแบบ One-to-Many ทำให้เรคอร์ดคำสั่งซื้อขยายตัวทวีคูณ ส่งผลให้ตัวเลขยอดขายบวมเกินจริง (Double Counting)
-2. **ข้อมูลหลุดการเชื่อมโยง (Unmatched Key Fragmentation):**  
-   หากไม่แปลงชื่อจังหวัดให้เป็นมาตรฐานก่อน (`'Chonburi'` vs `'ชลบุรี'` หรือ `'Bangkok'` vs `'กรุงเทพมหานคร'`) เมื่อนำไป Group By หรือวิเคราะห์ Dimension ยอดขายจะแตกกระจายเป็นกลุ่มย่อยที่ไม่ถูกต้อง
-3. **การคำนวณยอดขายผิดพลาด (Revenue Miscalculation):**  
-   หากไม่กรองข้อมูลที่มี `quantity <= 0` (เช่น -1), `unit_price` เป็น Null หรือรายการชำระเงินที่ `FAILED` / `REFUNDED` ออกก่อน ระบบจะนำตัวเลขเหล่านี้ไปรวมในยอดขายสุทธิ ทำให้รายงานการเงินของบริษัทผิดพลาด
-4. **สูญเสีย Audit Trail & Traceability:**  
-   การทำ Data Quality Tracking ทีละขั้นตอนทำให้ทราบชัดเจนว่าแถวใดถูกคัดออกด้วยเหตุผลทางธุรกิจใด หาก Merge รวดเดียว จะไม่สามารถชี้ชัดสาเหตุของความผิดพลาดในแต่ละมิติได้
+1. **เกิดปัญหา Cartesian Explosion (Fan-out Duplication):** 
+ หากใน Master Data มีคีย์ซ้ำ (เช่น `C0012`, `C0045`, `C0088` ใน CRM) การ Merge จะจับคู่แถวแบบ One-to-Many ทำให้เรคอร์ดคำสั่งซื้อขยายตัวทวีคูณ ส่งผลให้ตัวเลขยอดขายบวมเกินจริง (Double Counting)
+2. **ข้อมูลหลุดการเชื่อมโยง (Unmatched Key Fragmentation):** 
+ หากไม่แปลงชื่อจังหวัดให้เป็นมาตรฐานก่อน (`'Chonburi'` vs `'ชลบุรี'` หรือ `'Bangkok'` vs `'กรุงเทพมหานคร'`) เมื่อนำไป Group By หรือวิเคราะห์ Dimension ยอดขายจะแตกกระจายเป็นกลุ่มย่อยที่ไม่ถูกต้อง
+3. **การคำนวณยอดขายผิดพลาด (Revenue Miscalculation):** 
+ หากไม่กรองข้อมูลที่มี `quantity <= 0` (เช่น -1), `unit_price` เป็น Null หรือรายการชำระเงินที่ `FAILED` / `REFUNDED` ออกก่อน ระบบจะนำตัวเลขเหล่านี้ไปรวมในยอดขายสุทธิ ทำให้รายงานการเงินของบริษัทผิดพลาด
+4. **สูญเสีย Audit Trail & Traceability:** 
+ การทำ Data Quality Tracking ทีละขั้นตอนทำให้ทราบชัดเจนว่าแถวใดถูกคัดออกด้วยเหตุผลทางธุรกิจใด หาก Merge รวดเดียว จะไม่สามารถชี้ชัดสาเหตุของความผิดพลาดในแต่ละมิติได้
 
 ---
 

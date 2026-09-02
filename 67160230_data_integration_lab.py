@@ -35,7 +35,7 @@ dq_records = []
 
 def step1_extract_and_profile():
     print("=" * 80)
-    print("🚀 STEP 1: EXTRACT & INITIAL PROFILING")
+    print(" STEP 1: EXTRACT & INITIAL PROFILING")
     print("=" * 80)
     
     # Ingest Datasets
@@ -66,7 +66,7 @@ def step1_extract_and_profile():
         "action_taken": "Ingested raw data"
     })
     
-    print(f"📊 Raw Dataset Shapes:")
+    print(f" Raw Dataset Shapes:")
     print(f"  1. orders_2026_01.csv  : {df_orders1.shape[0]} rows, {df_orders1.shape[1]} columns")
     print(f"  2. orders_2026_02.csv  : {df_orders2.shape[0]} rows, {df_orders2.shape[1]} columns")
     print(f"  3. customers_crm.csv   : {df_customers.shape[0]} rows, {df_customers.shape[1]} columns")
@@ -78,7 +78,7 @@ def step1_extract_and_profile():
 
 def step2_schema_alignment_and_combine(df_orders1, df_orders2):
     print("\n" + "=" * 80)
-    print("🔄 STEP 2: SCHEMA ALIGNMENT & ORDERS CONCATENATION")
+    print(" STEP 2: SCHEMA ALIGNMENT & ORDERS CONCATENATION")
     print("=" * 80)
     
     # 2.1 Rename columns for February Orders
@@ -113,7 +113,7 @@ def step2_schema_alignment_and_combine(df_orders1, df_orders2):
         "action_taken": "Standardized schema and concatenated with pd.concat(ignore_index=True)"
     })
     
-    print(f"✅ Combined Orders Successfully:")
+    print(f" Combined Orders Successfully:")
     print(f"  • January Orders : {len(df_orders1_aligned)} rows")
     print(f"  • February Orders: {len(df_orders2_aligned)} rows")
     print(f"  • Combined Total : {len(orders_combined)} rows")
@@ -123,7 +123,7 @@ def step2_schema_alignment_and_combine(df_orders1, df_orders2):
 
 def step3_clean_and_standardize(orders_combined, df_customers_raw, df_products_raw, df_payments_raw):
     print("\n" + "=" * 80)
-    print("🧹 STEP 3: DATA CLEANING & STANDARDIZATION")
+    print(" STEP 3: DATA CLEANING & STANDARDIZATION")
     print("=" * 80)
     
     # 3.1 Deduplicate Orders
@@ -261,7 +261,7 @@ def step3_clean_and_standardize(orders_combined, df_customers_raw, df_products_r
 
 def step4_integrate_and_validate(orders_valid, dim_customer, dim_product, payments_clean, orders_combined):
     print("\n" + "=" * 80)
-    print("🔗 STEP 4: INTEGRATION & REFERENTIAL INTEGRITY VALIDATION (pd.merge)")
+    print(" STEP 4: INTEGRATION & REFERENTIAL INTEGRITY VALIDATION (pd.merge)")
     print("=" * 80)
     
     # 4.1 Merge Orders with Customer Master
@@ -349,7 +349,7 @@ def step4_integrate_and_validate(orders_valid, dim_customer, dim_product, paymen
 
 def step5_build_fact_table(m_pay):
     print("\n" + "=" * 80)
-    print("⭐ STEP 5: FACT TABLE CONSTRUCTION & NET SALES CALCULATION")
+    print(" STEP 5: FACT TABLE CONSTRUCTION & NET SALES CALCULATION")
     print("=" * 80)
     
     # Filter only PAID orders
@@ -371,7 +371,7 @@ def step5_build_fact_table(m_pay):
     total_net_sales = fact_sales["net_sales"].sum()
     total_qty = fact_sales["quantity"].sum()
     
-    print(f"🎉 Fact Sales Table Built Successfully:")
+    print(f" Fact Sales Table Built Successfully:")
     print(f"  • Total Paid Transactions: {len(fact_sales):,} rows")
     print(f"  • Total Quantity Sold    : {total_qty:,} items")
     print(f"  • Total Net Sales Amount : {total_net_sales:,.2f} THB")
@@ -381,7 +381,7 @@ def step5_build_fact_table(m_pay):
 
 def step6_export_deliverables(fact_sales, dim_customer, dim_product):
     print("\n" + "=" * 80)
-    print("💾 STEP 6: EXPORTING DELIVERABLES (6 CSV FILES)")
+    print(" STEP 6: EXPORTING DELIVERABLES (6 CSV FILES)")
     print("=" * 80)
     
     fact_enriched = fact_sales.merge(
@@ -427,7 +427,7 @@ def step6_export_deliverables(fact_sales, dim_customer, dim_product):
     summary_by_province.to_csv(OUTPUT_DIR / "summary_by_province.csv", index=False, encoding="utf-8-sig")
     summary_by_category.to_csv(OUTPUT_DIR / "summary_by_category.csv", index=False, encoding="utf-8-sig")
     
-    print("✅ All 6 Deliverable CSV Files Exported to output/ folder:")
+    print(" All 6 Deliverable CSV Files Exported to output/ folder:")
     for f in sorted(OUTPUT_DIR.glob("*.csv")):
         print(f"  • {f.name:<25} ({len(pd.read_csv(f)):>3} rows)")
         
@@ -436,23 +436,23 @@ def step6_export_deliverables(fact_sales, dim_customer, dim_product):
 
 def step7_challenge_validation_and_funnel(fact_sales, dim_customer, dim_product, orders_combined, orders_valid, orders_matched_prod):
     print("\n" + "=" * 80)
-    print("🏆 STEP 7: CHALLENGE BONUS (+2 PTS) - AUTOMATED VALIDATION & FUNNEL")
+    print(" STEP 7: CHALLENGE BONUS (+2 PTS) - AUTOMATED VALIDATION & FUNNEL")
     print("=" * 80)
     
     def validate_data(fact, cust, prod):
         """Automated assertions for uniqueness, referential integrity, and business bounds."""
-        print("🔍 Running Automated Data Validation Checks...")
+        print(" Running Automated Data Validation Checks...")
         
         # 1. Uniqueness Checks (Primary Keys)
         assert fact["order_id"].is_unique, "[FAIL] fact_sales.order_id contains duplicate values!"
         assert cust["customer_id"].is_unique, "[FAIL] dim_customer.customer_id contains duplicate values!"
         assert prod["product_id"].is_unique, "[FAIL] dim_product.product_id contains duplicate values!"
-        print("  ✅ 1. Primary Keys Uniqueness: PASSED (order_id, customer_id, product_id are 100% unique)")
+        print("   1. Primary Keys Uniqueness: PASSED (order_id, customer_id, product_id are 100% unique)")
         
         # 2. Referential Integrity Checks (Foreign Keys)
         assert fact["customer_id"].isin(cust["customer_id"]).all(), "[FAIL] Unmatched customer_id in fact_sales!"
         assert fact["product_id"].isin(prod["product_id"]).all(), "[FAIL] Unmatched product_id in fact_sales!"
-        print("  ✅ 2. Referential Integrity: PASSED (All foreign keys exist in dimension tables)")
+        print("   2. Referential Integrity: PASSED (All foreign keys exist in dimension tables)")
         
         # 3. Domain & Value Range Checks
         assert (fact["quantity"] > 0).all(), "[FAIL] Found non-positive quantity in fact_sales!"
@@ -460,9 +460,9 @@ def step7_challenge_validation_and_funnel(fact_sales, dim_customer, dim_product,
         assert ((fact["discount"] >= 0) & (fact["discount"] <= 1)).all(), "[FAIL] Discount out of bounds [0, 1]!"
         assert (fact["payment_status"] == "PAID").all(), "[FAIL] Found non-PAID status in fact_sales!"
         assert (fact["net_sales"] > 0).all(), "[FAIL] Found non-positive net_sales!"
-        print("  ✅ 3. Business Bounds & Domain Validity: PASSED (All ranges, prices, discounts, and payment statuses valid)")
+        print("   3. Business Bounds & Domain Validity: PASSED (All ranges, prices, discounts, and payment statuses valid)")
         
-        print("\n🎉 ALL AUTOMATED VALIDATION ASSERTIONS PASSED 100%!")
+        print("\n ALL AUTOMATED VALIDATION ASSERTIONS PASSED 100%!")
         return True
 
     validate_data(fact_sales, dim_customer, dim_product)
@@ -498,38 +498,38 @@ def step7_challenge_validation_and_funnel(fact_sales, dim_customer, dim_product,
     plt.savefig(OUTPUT_DIR / "dq_funnel.png", dpi=300)
     plt.savefig(Path("dq_funnel.png"), dpi=300)
     plt.close()
-    print("📈 Data Quality Funnel Chart Saved as 'output/dq_funnel.png' and 'dq_funnel.png'")
+    print(" Data Quality Funnel Chart Saved as 'output/dq_funnel.png' and 'dq_funnel.png'")
 
 
 def print_business_answers(summary_by_province, summary_by_category, fact_sales):
     print("\n" + "=" * 80)
-    print("📝 BUSINESS ANALYSIS QUESTIONS & ANSWERS (6 QUESTIONS)")
+    print(" BUSINESS ANALYSIS QUESTIONS & ANSWERS (6 QUESTIONS)")
     print("=" * 80)
     
     print("""
-🔹 ข้อ 1: หลังรวมไฟล์ orders มีจำนวนแถวเท่าใด และเหลือกี่แถวหลังลบ duplicate?
+ ข้อ 1: หลังรวมไฟล์ orders มีจำนวนแถวเท่าใด และเหลือกี่แถวหลังลบ duplicate?
 - หลังรวมไฟล์คำสั่งซื้อ ม.ค. (361 แถว) และ ก.พ. (391 แถว) มีจำนวนแถวรวมทั้งหมด 752 แถว
 - หลังลบ order_id ที่ซ้ำกันออก 2 แถว (ORD000056, ORD000416) โดยเก็บแถวล่าสุด (keep='last') จะเหลือข้อมูล 750 แถว
 
-🔹 ข้อ 2: มีแถวที่ customer_id หรือ product_id ไม่พบใน Master Data อย่างละกี่แถว?
+ ข้อ 2: มีแถวที่ customer_id หรือ product_id ไม่พบใน Master Data อย่างละกี่แถว?
 - customer_id ที่ไม่พบใน CRM Master มีจำนวน 22 แถว (รหัสลูกค้า: C0161, C0162, C0163, C0164, C0165)
 - product_id ที่ไม่พบใน Product Master มีจำนวน 2 แถว (รหัสสินค้า: P999)
 
-🔹 ข้อ 3: มียอดขายที่ใช้ได้จริงกี่ธุรกรรม และยอดขายสุทธิรวมเท่าใด?
+ ข้อ 3: มียอดขายที่ใช้ได้จริงกี่ธุรกรรม และยอดขายสุทธิรวมเท่าใด?
 - จำนวนธุรกรรมยอดขายที่ใช้ได้จริง (PAID Transactions): 660 ธุรกรรม
 - ยอดขายสุทธิรวมทั้งสิ้น (Total Net Sales): 10,224,044.09 บาท (จำนวนชิ้นขายได้รวม 1,337 ชิ้น)
 
-🔹 ข้อ 4: จังหวัดใดมียอดขายสุทธิสูงสุด?
+ ข้อ 4: จังหวัดใดมียอดขายสุทธิสูงสุด?
 - อันดับ 1: กรุงเทพมหานคร มียอดขายสุทธิ 2,612,955.88 บาท (คิดเป็น 25.56% ของยอดขายรวม, 154 ออเดอร์, 323 ชิ้น)
 - ตารางสรุป 6 จังหวัด:
 """ + summary_by_province.to_string(index=False) + """
 
-🔹 ข้อ 5: หมวดสินค้าใดมียอดขายสุทธิสูงสุด?
+ ข้อ 5: หมวดสินค้าใดมียอดขายสุทธิสูงสุด?
 - อันดับ 1: Smartphone มียอดขายสุทธิ 3,092,117.34 บาท (คิดเป็น 30.24% ของยอดขายรวม, 178 ออเดอร์, 384 ชิ้น)
 - ตารางสรุป 4 หมวดสินค้า:
 """ + summary_by_category.to_string(index=False) + """
 
-🔹 ข้อ 6: หากสลับลำดับ merge ก่อน cleaning ผลลัพธ์หรือความเชื่อมั่นของข้อมูลเปลี่ยนอย่างไร?
+ ข้อ 6: หากสลับลำดับ merge ก่อน cleaning ผลลัพธ์หรือความเชื่อมั่นของข้อมูลเปลี่ยนอย่างไร?
 - 1. เกิดปัญหา Cartesian Explosion (Fan-out Duplication): หาก Master Data มีคีย์ซ้ำ (C0012, C0045, C0088) การ Merge จะทวีคูณจำนวนแถวคำสั่งซื้อ ทำให้ยอดขายบวมเกินจริง (Double Counting)
 - 2. ข้อมูลหลุดการเชื่อมโยง (Unmatched Key Fragmentation): หากไม่แปลงชื่อจังหวัดหรือข้อความให้เป็นมาตรฐานก่อน เมื่อ Group By รายงานจะแตกกระจายเป็นกลุ่มย่อยที่ไม่ถูกต้อง
 - 3. การคำนวณยอดขายผิดพลาด (Revenue Miscalculation): หากไม่กรอง quantity <= 0, unit_price เป็น Null หรือสถานะ FAILED/REFUNDED ออกก่อน รายได้รวมจะผิดพลาด
@@ -559,7 +559,7 @@ def main():
     print_business_answers(summary_prov, summary_cat, fact_sales)
     
     print("\n" + "=" * 80)
-    print("🏁 PIPELINE COMPLETED SUCCESSFULLY 100%!")
+    print(" PIPELINE COMPLETED SUCCESSFULLY 100%!")
     print("=" * 80)
 
 
