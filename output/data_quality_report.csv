@@ -1,0 +1,16 @@
+﻿step,table_name,issue_type,affected_rows,description,action_taken
+1. Extract & Profile,orders_2026_01,Initial Ingestion,361,Loaded January 2026 orders,Ingested raw data
+1. Extract & Profile,orders_2026_02,Initial Ingestion,391,Loaded February 2026 orders with schema drift,Ingested raw data
+2. Schema Alignment,orders_combined,Schema Drift Resolved,391,"Renamed (ordered_at->order_date, qty->quantity, discount_pct->discount), parsed discount% and dates",Standardized schema and concatenated with pd.concat(ignore_index=True)
+3. Cleaning - Deduplication,orders,Duplicate Key,2,"Found duplicate order_id (['ORD000056', 'ORD000416'])",Deduplicated by keeping latest record (keep='last')
+3. Cleaning - Business Rules,orders,Invalid Value (Quantity <= 0),2,"Orders with non-positive quantity: ['ORD000008', 'ORD000368']",Filtered out invalid order rows
+3. Cleaning - Business Rules,orders,Missing / Non-positive Price,2,"Orders with null or <=0 unit_price: ['ORD000044', 'ORD000404']",Filtered out invalid order rows
+3. Cleaning - Customers,customers_crm,Duplicate Key,3,Duplicate customer records in CRM,Deduplicated keeping latest record (keep='last')
+3. Cleaning - Customers,dim_customer,Standardization / Missing Values,5,Standardized email to lowercase/trim. Found 5 missing emails.,"Standardized text formatting, retained existing records"
+3. Cleaning - Customers,dim_customer,Province Inconsistency,160,"Standardized inconsistent province names (Thai, English, Typos) into 6 official Thai provinces",Mapped to standard Thai province names
+3. Cleaning - Products,dim_product,Master Verification,40,Verified product master data (40 unique products),Prepared clean dim_product table
+3. Cleaning - Payments,payments,Duplicate Payment & Nested Extraction,1,"Extracted payment.method & payment.status, deduplicated payment_id",Flattened nested JSON and deduplicated with keep='last'
+4. Integration - Referential Integrity,orders_x_customer,Orphan Foreign Key (Customer),22,"Orders referencing non-existent customer_ids: ['C0161', 'C0162', 'C0163', 'C0164', 'C0165']",Filtered out orders without valid customer master reference
+4. Integration - Referential Integrity,orders_x_product,Orphan Foreign Key (Product),2,Orders referencing non-existent product_ids: ['P999'],Filtered out orders without valid product master reference
+4. Integration - Payment Status,orders_x_payments,Non-PAID Status,62,"Transactions not completed: {'PAID': 660, 'FAILED': 44, 'REFUNDED': 18}",Filtered to keep only payment_status == 'PAID'
+4. Integration - Payment Gateway,payments,Orphan Payment Event,1,Payment events without corresponding order_id in transaction system: ['ORD999999'],Ignored orphan payments in Fact table
